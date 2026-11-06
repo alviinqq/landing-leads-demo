@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aerolis - montaż i serwis klimatyzacji w Poznaniu (demo)</title>
+<meta name="description" content="Demo strony z formularzem: zgłoszenia trafiają od razu do Telegrama i Google Sheets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1d2b;
+    --muted: #5a6b7b;
+    --line: #dfe7ee;
+    --bg: #f5f8fb;
+    --card: #ffffff;
+    --accent: #0a7cff;
+    --accent-dark: #0060cc;
+    --ice: #e6f2ff;
+    --ok: #12996b;
+    --err: #d23c3c;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Manrope", system-ui, -apple-system, Segoe UI, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  .demo-bar {
+    background: var(--ink); color: #cfe3f7; font-size: 13px; text-align: center; padding: 8px 16px;
+  }
+  .demo-bar b { color: #fff; }
+
+  header.top { padding: 22px 0; }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; text-decoration: none; }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, #5ab8ff, var(--accent));
+    display: grid; place-items: center; color: #fff; font-size: 18px;
+  }
+  .top-phone { font-weight: 700; text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+
+  .hero { padding: 36px 0 72px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: start; }
+  .eyebrow { display: inline-block; background: var(--ice); color: var(--accent-dark); font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 999px; }
+  h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.05; letter-spacing: -0.035em; margin: 18px 0 18px; }
+  h1 span { color: var(--accent); }
+  .lead { font-size: 18px; color: var(--muted); max-width: 520px; margin: 0 0 28px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 28px; margin: 0; padding: 0; list-style: none; }
+  .facts b { display: block; font-size: 26px; letter-spacing: -0.02em; }
+  .facts span { color: var(--muted); font-size: 14px; }
+
+  .form-card {
+    background: var(--card); border-radius: 24px; padding: 28px;
+    box-shadow: 0 20px 50px -20px rgba(15, 29, 43, 0.25); border: 1px solid var(--line);
+  }
+  .form-card h2 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; }
+  .form-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%; font: inherit; font-size: 15px; color: var(--ink);
+    padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: #fbfdff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field textarea { resize: vertical; min-height: 76px; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(10, 124, 255, .12);
+  }
+  .field.invalid input, .field.invalid select { border-color: var(--err); }
+  .field .error { color: var(--err); font-size: 13px; margin-top: 4px; min-height: 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  button.submit {
+    width: 100%; border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 16px;
+    background: var(--accent); color: #fff; padding: 15px; border-radius: 12px; margin-top: 4px;
+    transition: background .15s, transform .05s;
+  }
+  button.submit:hover { background: var(--accent-dark); }
+  button.submit:active { transform: translateY(1px); }
+  button.submit[disabled] { opacity: .6; cursor: wait; }
+  .fine { font-size: 12px; color: var(--muted); margin: 12px 0 0; text-align: center; }
+  .status { display: none; border-radius: 12px; padding: 14px; font-size: 14px; margin-top: 14px; }
+  .status.ok { display: block; background: #e8f7f1; color: #0b6b4b; }
+  .status.err { display: block; background: #fdeeee; color: #9b2222; }
+  .success-view { display: none; text-align: center; padding: 30px 6px; }
+  .success-view .tick { width: 64px; height: 64px; border-radius: 50%; background: #e8f7f1; color: var(--ok); display: grid; place-items: center; font-size: 32px; margin: 0 auto 16px; }
+  .success-view h2 { margin-bottom: 8px; }
+
+  section { padding: 72px 0; }
+  section.alt { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .section-title { font-size: clamp(26px, 3.4vw, 36px); letter-spacing: -0.03em; margin: 0 0 10px; }
+  .section-sub { color: var(--muted); margin: 0 0 36px; max-width: 560px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  section.alt .tile { background: var(--bg); }
+  .tile .ico { width: 44px; height: 44px; border-radius: 12px; background: var(--ice); display: grid; place-items: center; font-size: 22px; margin-bottom: 14px; }
+  .tile h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
+  .tile p { margin: 0; color: var(--muted); font-size: 15px; }
+  .price { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 4px; }
+  .price small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .tile ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .tile.featured { border: 2px solid var(--accent); position: relative; }
+  .tile.featured::before { content: "Najczęściej wybierane"; position: absolute; top: -12px; left: 20px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .step { counter-increment: step; }
+  .step::before { content: counter(step); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 800; margin-bottom: 12px; }
+  .step h3 { margin: 0 0 4px; font-size: 17px; }
+  .step p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; }
+  .faq summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary::after { content: "+"; color: var(--accent); font-size: 20px; line-height: 1; }
+  .faq details[open] summary::after { content: "–"; }
+  .faq details p { margin: 10px 0 0; color: var(--muted); }
+
+  .cta { text-align: center; }
+  .cta a.btn { display: inline-block; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; padding: 15px 28px; border-radius: 12px; }
+
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 13px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 900px) {
+    .hero .wrap { grid-template-columns: 1fr; gap: 36px; }
+    .grid3 { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) {
+    .row2 { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .top-phone { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar"><b>Projekt demonstracyjny.</b> Firma Aerolis jest fikcyjna - strona pokazuje formularz, który wysyła zgłoszenia do Telegrama i Google Sheets.</div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#"><span class="logo-mark">❄</span> Aerolis</a>
+    <a class="top-phone" href="#zgloszenie">Zostaw numer - oddzwonimy</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" style="padding-top:36px">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Poznań i okolice do 40 km</span>
+        <h1>Klimatyzacja w mieszkaniu <span>w 1 dzień</span>, bez kucia ścian</h1>
+        <p class="lead">Dobieramy urządzenie do metrażu, montujemy czysto i zostawiamy gwarancję na 5 lat. Wycena po krótkiej rozmowie, bez wizyty technika.</p>
+        <ul class="facts">
+          <li><b>1 200+</b><span>montaży od 2019</span></li>
+          <li><b>5 lat</b><span>gwarancji na montaż</span></li>
+          <li><b>15 min</b><span>średni czas oddzwonienia</span></li>
+        </ul>
+      </div>
+
+      <div class="form-card" id="zgloszenie">
+        <form id="lead-form" novalidate>
+          <h2>Bezpłatna wycena</h2>
+          <p class="sub">Zostaw kontakt - oddzwonimy w godzinach 8-20.</p>
+
+          <div class="field" data-field="name">
+            <label for="name">Imię</label>
+            <input id="name" name="name" autocomplete="given-name" placeholder="np. Anna">
+            <div class="error"></div>
+          </div>
+
+          <div class="field" data-field="phone">
+            <label for="phone">Telefon</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+48 600 000 000">
+            <div class="error"></div>
+          </div>
+
+          <div class="row2">
+            <div class="field" data-field="service">
+              <label for="service">Usługa</label>
+              <select id="service" name="service">
+                <option value="">Wybierz</option>
+                <option value="montaz">Montaż</option>
+                <option value="serwis">Serwis i czyszczenie</option>
+                <option value="naprawa">Naprawa</option>
+                <option value="inne">Inne pytanie</option>
+              </select>
+              <div class="error"></div>
+            </div>
+            <div class="field" data-field="city">
+              <label for="city">Miejscowość</label>
+              <input id="city" name="city" placeholder="Poznań">
+              <div class="error"></div>
+            </div>
+          </div>
+
+          <div class="field" data-field="message">
+            <label for="message">Komentarz <span style="color:var(--muted);font-weight:500">(opcjonalnie)</span></label>
+            <textarea id="message" name="message" placeholder="np. mieszkanie 50 m², 3 piętro"></textarea>
+          </div>
+
+          <div class="hp" aria-hidden="true">
+            <label for="website">Nie wypełniaj</label>
+            <input id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button class="submit" type="submit">Zamów wycenę</button>
+          <p class="fine">Wysyłając formularz zgadzasz się na kontakt telefoniczny w sprawie wyceny.</p>
+          <div class="status" role="status"></div>
+        </form>
+
+        <div class="success-view" id="success">
+          <div class="tick">✓</div>
+          <h2>Dziękujemy!</h2>
+          <p class="sub" id="success-text">Zgłoszenie dotarło. Oddzwonimy wkrótce.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 class="section-title">Dlaczego Aerolis</h2>
+      <p class="section-sub">Robimy tylko klimatyzację, więc znamy ją od strony montażu, serwisu i papierów.</p>
+      <div class="grid3">
+        <div class="tile"><div class="ico">🧰</div><h3>Czysty montaż</h3><p>Zabezpieczamy podłogę i meble, po pracy odkurzamy. Instalację prowadzimy w estetycznych listwach.</p></div>
+        <div class="tile"><div class="ico">📐</div><h3>Dobór do pomieszczenia</h3><p>Liczymy moc pod metraż, nasłonecznienie i piętro. Nie sprzedajemy za dużych urządzeń.</p></div>
+        <div class="tile"><div class="ico">🧾</div><h3>Faktura i gwarancja</h3><p>Uprawnienia F-gazowe, wpis do CRO i 5 lat gwarancji na montaż. Przypomnimy o przeglądzie.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 class="section-title">Ceny</h2>
+      <p class="section-sub">Orientacyjne ceny z montażem standardowym do 3 m instalacji.</p>
+      <div class="grid3">
+        <div class="tile"><h3>Pokój do 25 m²</h3><div class="price">od 3 490 zł</div><ul><li>Urządzenie 2,5 kW</li><li>Montaż w 4-5 godzin</li><li>Sterowanie z telefonu</li></ul></div>
+        <div class="tile featured"><h3>Salon do 40 m²</h3><div class="price">od 4 290 zł</div><ul><li>Urządzenie 3,5 kW</li><li>Tryb grzania zimą</li><li>Cicha praca od 19 dB</li></ul></div>
+        <div class="tile"><h3>Serwis i czyszczenie</h3><div class="price">od 249 zł <small>/ jednostka</small></div><ul><li>Odgrzybianie i dezynfekcja</li><li>Kontrola szczelności</li><li>Wpis do karty urządzenia</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 class="section-title">Jak to wygląda</h2>
+      <p class="section-sub">Od zgłoszenia do chłodnego mieszkania zwykle mija kilka dni.</p>
+      <div class="steps">
+        <div class="step"><h3>Zgłoszenie</h3><p>Zostawiasz numer w formularzu.</p></div>
+        <div class="step"><h3>Rozmowa</h3><p>Oddzwaniamy, pytamy o metraż i podajemy cenę.</p></div>
+        <div class="step"><h3>Montaż</h3><p>Ustalamy termin, montaż trwa jeden dzień.</p></div>
+        <div class="step"><h3>Gwarancja</h3><p>Dostajesz fakturę i przypomnienia o serwisie.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq">
+    <div class="wrap" style="max-width:780px">
+      <h2 class="section-title">Częste pytania</h2>
+      <details><summary>Czy potrzebna jest wizyta przed montażem?</summary><p>Zwykle nie. Wystarczą zdjęcia ściany i miejsca na jednostkę zewnętrzną. Wizytę robimy tylko przy nietypowych instalacjach.</p></details>
+      <details><summary>Czy klimatyzacja może grzać zimą?</summary><p>Tak, oferowane urządzenia pracują jako pompa ciepła nawet przy kilkunastu stopniach mrozu.</p></details>
+      <details><summary>Co z hałasem jednostki zewnętrznej?</summary><p>Dobieramy ciche modele i miejsce montażu tak, żeby nie przeszkadzały sąsiadom.</p></details>
+    </div>
+  </section>
+
+  <section class="cta alt">
+    <div class="wrap">
+      <h2 class="section-title">Upał przyjdzie szybciej niż termin montażu</h2>
+      <p class="section-sub" style="margin:0 auto 24px">Zostaw numer teraz, wycena nic nie kosztuje.</p>
+      <a class="btn" href="#zgloszenie">Zamów bezpłatną wycenę</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Aerolis - firma fikcyjna, strona demonstracyjna.</span>
+    <span>Formularz: Telegram Bot API + Google Sheets</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const form = document.getElementById("lead-form");
+  const statusBox = form.querySelector(".status");
+  const button = form.querySelector("button.submit");
+
+  function setError(name, text) {
+    const field = form.querySelector('[data-field="' + name + '"]');
+    if (!field) return;
+    field.classList.toggle("invalid", Boolean(text));
+    field.querySelector(".error").textContent = text || "";
+  }
+
+  function validate(data) {
+    const errors = {};
+    if (data.name.trim().length < 2) errors.name = "Podaj imię";
+    const digits = data.phone.replace(/\D/g, "");
+    if (!/^[+\d\s()-]+$/.test(data.phone.trim()) || digits.length < 9 || digits.length > 15) errors.phone = "Podaj poprawny numer telefonu";
+    if (!data.service) errors.service = "Wybierz usługę";
+    return errors;
+  }
+
+  function showSuccess(demo) {
+    form.style.display = "none";
+    document.getElementById("success").style.display = "block";
+    if (demo) {
+      document.getElementById("success-text").textContent =
+        "Tryb demo: zgłoszenie przeszło walidację. Po podłączeniu bota trafi do Telegrama i arkusza.";
+    }
+  }
+
+  form.addEventListener("input", function (e) {
+    if (e.target.name) setError(e.target.name, "");
+  });
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    statusBox.className = "status";
+    const data = Object.fromEntries(new FormData(form).entries());
+    const errors = validate(data);
+    ["name", "phone", "service"].forEach(function (k) { setError(k, errors[k]); });
+    if (Object.keys(errors).length) return;
+
+    button.disabled = true;
+    button.textContent = "Wysyłanie…";
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      // Opened as a plain file or static hosting without the API: show demo success.
+      if (res.status === 404 || res.status === 405 && !res.headers.get("content-type")?.includes("json")) {
+        return showSuccess(true);
+      }
+      const body = await res.json().catch(function () { return {}; });
+      if (res.ok && body.ok) return showSuccess(Boolean(body.demo));
+      if (body.errors) {
+        Object.keys(body.errors).forEach(function (k) { setError(k, body.errors[k]); });
+      }
+      statusBox.className = "status err";
+      statusBox.textContent = body.error || "Sprawdź pola formularza.";
+    } catch (err) {
+      if (location.protocol === "file:") return showSuccess(true);
+      statusBox.className = "status err";
+      statusBox.textContent = "Brak połączenia. Spróbuj ponownie za chwilę.";
+    } finally {
+      button.disabled = false;
+      button.textContent = "Zamów wycenę";
+    }
+  });
+})();
+</script>
+</body>
+</html>
